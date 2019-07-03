@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "SCharacter.generated.h"
 
+class UCameraComponent;
+class USpringArmComponent;
+
 UCLASS()
 class UNREALARENA_API ASCharacter : public ACharacter
 {
@@ -19,8 +22,16 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Player input
 	void MoveForward(float Direction);
 	void MoveRight(float Direction);
+
+	// expose the class to unreal to allow editing properties, blueprint readonly means we cannot reinstantiate it
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UCameraComponent* CameraComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USpringArmComponent* SpringArmComp;
 
 public:	
 	// Called every frame
