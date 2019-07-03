@@ -3,6 +3,7 @@
 #include "../Public/SCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -37,6 +38,20 @@ void ASCharacter::MoveRight(float Direction)
 	AddMovementInput(GetActorRightVector() * Direction);
 }
 
+void ASCharacter::BeginCrouch()
+{
+	// UE implementation
+	// Without setting this nothing will happen. Must tell unreal to enable crouching on player pawns
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	Crouch();
+}
+
+void ASCharacter::EndCrouch()
+{
+	// UE implementation
+	UnCrouch();
+}
+
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
 {
@@ -49,10 +64,15 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	// (Name In Project settings, parent, function delegate to invoke)
+	//								(Name In Project settings, parent, function delegate to invoke)
+	// Movement
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASCharacter::MoveRight);
+	// Looking
 	PlayerInputComponent->BindAxis("LookUp", this, &ASCharacter::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn", this, &ASCharacter::AddControllerYawInput);
+	// Crouching
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ASCharacter::BeginCrouch);
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ASCharacter::EndCrouch);
 }
 

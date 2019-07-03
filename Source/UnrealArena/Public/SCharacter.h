@@ -22,9 +22,12 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// Player input
+	// Movement
 	void MoveForward(float Direction);
 	void MoveRight(float Direction);
+	// Crouch
+	void BeginCrouch();
+	void EndCrouch();
 
 	// expose the class to unreal to allow editing properties, blueprint readonly means we cannot reinstantiate it
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
