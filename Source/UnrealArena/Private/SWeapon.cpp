@@ -24,6 +24,8 @@ ASWeapon::ASWeapon()
 
 	TracerTargetName = "BeamEnd";
 	MuzzleSocketName = "MuzzleFlashSocket";
+
+	BaseDamage = 25.f;
 }
 
 
@@ -53,6 +55,7 @@ FVector ASWeapon::Shoot(AActor* own) {
 	// More expensive, but also tells us exactly where the collision occurred
 	// Useful for spawning effects on the hit
 	QueryParams.bTraceComplex = true;
+	// Necessary for us to determine which surface type was hit
 	QueryParams.bReturnPhysicalMaterial = true;
 
 	FHitResult Hit;
@@ -67,16 +70,25 @@ FVector ASWeapon::Shoot(AActor* own) {
 	if (blockingHit) {
 		AActor* HitActor = Hit.GetActor();
 
+		// Head shot
+		EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+
+		float ActualDamage = BaseDamage;
+		// check for head shot
+		if (SurfaceType == SURFACE_FLESHVULNERABLE) {
+			ActualDamage *= 4.f;
+		}
+
 		UGameplayStatics::ApplyPointDamage(
 			HitActor,							// Actor that got hit
-			20.f,								// damage to apply
+			ActualDamage,								// damage to apply
 			ShotDirection,						// direction shot came from
 			Hit,								// struct containing all hit data
 			own->GetInstigatorController(),	// who triggered the damage event
 			this,								// who is applying the damage to the AActor
 			DamageType);						// damage type (using unreal defaults) - can be extended for specific use
 
-		PlayImpactEffect(&Hit);
+		PlayImpactEffect(&Hit, &SurfaceType);
 
 		if (DrawDebugWeapon) {
 			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, 1.f, 0, 1.f);
@@ -95,12 +107,12 @@ void ASWeapon::PlayShotEffects(FVector targetPoint)
 	ShakeCamera();
 }
 
-void ASWeapon::PlayImpactEffect(FHitResult* hit) {
-	EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(hit->PhysMaterial.Get());
+void ASWeapon::PlayImpactEffect(FHitResult* hit, EPhysicalSurface* surfaceType) {
+	if (!surfaceType) { return; }
 
 	UParticleSystem* SelectedEffect = nullptr;
 
-	switch (SurfaceType) {
+	switch (*surfaceType) {
 	case SURFACE_FLESHDEFAULT:
 	case SURFACE_FLESHVULNERABLE:
 		SelectedEffect = FleshImpactEffect;

@@ -51,9 +51,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<UCameraShake> FireCamShake;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float BaseDamage;
+
 private:
 	// Weapon effects
-	void PlayImpactEffect(FHitResult* hit);
+	void PlayImpactEffect(FHitResult* hit, EPhysicalSurface* surfaceType);
 	void PlayShotEffects(FVector targetPoint);
 	void PlayMuzzleFlashEffect();
 	void PlaySmokeTrailEffect(FVector targetPoint);
