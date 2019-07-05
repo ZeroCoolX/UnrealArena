@@ -28,6 +28,9 @@ protected:
 	// Crouch
 	void BeginCrouch();
 	void EndCrouch();
+	// ADS
+	void BeginZoom();
+	void EndZoom();
 
 	// expose the class to unreal to allow editing properties, blueprint readonly means we cannot reinstantiate it
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -35,6 +38,14 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USpringArmComponent* SpringArmComp;
+
+	bool bZooming;
+	UPROPERTY(EditDefaultsOnly, Category = "Player")
+	float ZoomedFOV;
+	UPROPERTY(EditDefaultsOnly, Category = "Player", meta = (ClampMin = 0.1f, ClampMax = 100.f))
+	float ZoomInterpSpeed;
+	// Default Field of View
+	float DefaultFOV;
 
 public:	
 	// Called every frame
