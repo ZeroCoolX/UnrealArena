@@ -89,6 +89,7 @@ void ASWeapon::PlayShotEffects(FVector targetPoint)
 {
 	PlayMuzzleFlashEffect();
 	PlaySmokeTrailEffect(targetPoint);
+	ShakeCamera();
 }
 
 void ASWeapon::PlayImpactEffect(FHitResult* hit) {
@@ -114,6 +115,16 @@ void ASWeapon::PlaySmokeTrailEffect(FVector targetPoint) {
 		UParticleSystemComponent* TracerEffectComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation);
 		if (TracerEffectComp) {
 			TracerEffectComp->SetVectorParameter(TracerTargetName, targetPoint);
+		}
+	}
+}
+
+void ASWeapon::ShakeCamera() {
+	APawn* Owner = Cast<APawn>(GetOwner());
+	if (Owner) {
+		APlayerController* playerController = Cast<APlayerController>(Owner->GetController());
+		if (playerController) {
+			playerController->ClientPlayCameraShake(FireCamShake);
 		}
 	}
 }

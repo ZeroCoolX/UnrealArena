@@ -16,13 +16,16 @@ class UNREALARENA_API ASCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ASCharacter();
 
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual FVector GetPawnViewLocation() const override;
+
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	/******** Input /********/
 	// Movement
 	void MoveForward(float Direction);
 	void MoveRight(float Direction);
@@ -33,39 +36,30 @@ protected:
 	void BeginZoom();
 	void EndZoom();
 
+	bool bZooming;
+	UPROPERTY(EditDefaultsOnly, Category = "Player")
+	float ZoomedFOV;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Player", meta = (ClampMin = 0.1f, ClampMax = 100.f))
+	float ZoomInterpSpeed;
+
+	float DefaultFOV;
+
+	/******** Weapon /********/
+	void Fire();
+
 	UPROPERTY(EditDefaultsOnly, Category = "Player")
 	TSubclassOf<ASWeapon> StarterWeaponClass;
 
-	void Fire();
+	ASWeapon* CurrentWeapon;
 
-	// expose the class to unreal to allow editing properties, blueprint readonly means we cannot reinstantiate it
+	UPROPERTY(VisibleDefaultsOnly, Category = "Player")
+		FName WeaponAttachSocketName;
+
+	/******** Camera Control /********/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCameraComponent* CameraComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USpringArmComponent* SpringArmComp;
-
-	bool bZooming;
-	UPROPERTY(EditDefaultsOnly, Category = "Player")
-	float ZoomedFOV;
-	UPROPERTY(EditDefaultsOnly, Category = "Player", meta = (ClampMin = 0.1f, ClampMax = 100.f))
-	float ZoomInterpSpeed;
-	// Default Field of View
-	float DefaultFOV;
-
-	ASWeapon* CurrentWeapon;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "Player")
-	FName WeaponAttachSocketName;
-
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual FVector GetPawnViewLocation() const override;
-	
 };

@@ -16,10 +16,14 @@ class UNREALARENA_API ASWeapon : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ASWeapon();
 
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual void Fire();
+
 protected:
+	FVector Shoot(AActor* own);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* MeshComp;
 
@@ -41,17 +45,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* TracerEffect;
 
-	// Raycast
-	FVector Shoot(AActor* own);
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	TSubclassOf<UCameraShake> FireCamShake;
 
+private:
 	// Weapon effects
 	void PlayImpactEffect(FHitResult* hit);
 	void PlayShotEffects(FVector targetPoint);
 	void PlayMuzzleFlashEffect();
 	void PlaySmokeTrailEffect(FVector targetPoint);
-
-public:
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	virtual void Fire();
-
+	void ShakeCamera();
 };
