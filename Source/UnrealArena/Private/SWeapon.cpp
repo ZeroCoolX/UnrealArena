@@ -7,6 +7,13 @@
 #include "components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 
+static int32 DrawDebugWeapon = 0;
+FAutoConsoleVariableRef CVARDrawDebugWeapon (
+	TEXT("ARENA.DebugWeapons"), 
+	DrawDebugWeapon,
+	TEXT("Draw Debug Lines for weapons"), 
+	ECVF_Cheat);
+
 // Sets default values
 ASWeapon::ASWeapon()
 {
@@ -76,6 +83,10 @@ FVector ASWeapon::Shoot(AActor* own) {
 			DamageType);						// damage type (using unreal defaults) - can be extended for specific use
 
 		PlayImpactEffect(&Hit);
+
+		if (DrawDebugWeapon) {
+			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, 1.f, 0, 1.f);
+		}
 
 		TracerEndPoint = Hit.ImpactPoint;
 	}
