@@ -1,0 +1,125 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "../Public/SWeapon.h"
+#include "DrawDebugHelpers.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
+#include "components/SkeletalMeshComponent.h"
+#include "Particles/ParticleSystemComponent.h"
+
+// Sets default values
+ASWeapon::ASWeapon()
+{
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
+	RootComponent = MeshComp;
+
+	TracerTargetName = "BeamEnd";
+	MuzzleSocketName = "MuzzleFlashSocket";
+}
+
+// Called when the game starts or when spawned
+void ASWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}
+
+void ASWeapon::Fire() {
+	AActor* Owner = GetOwner();
+	if (Owner) {
+		FVector targetPoint = Shoot(Owner);
+		PlayShotEffects(targetPoint);
+	}
+}
+
+FVector ASWeapon::Shoot(AActor* own) {
+	// Setup basic line trace
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	own->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+	FVector ShotDirection = EyeRotation.Vector();
+
+	FVector TraceEnd = EyeLocation + (ShotDirection * 10000); // arbitrary long length for hitscan
+	// Particle "Target" parameter
+	FVector TracerEndPoint = TraceEnd;
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(own);
+	QueryParams.AddIgnoredActor(this);
+	// More expensive, but also tells us exactly where the collision occurred
+	// Useful for spawning effects on the hit
+	QueryParams.bTraceComplex = true;
+
+	FHitResult Hit;
+
+	bool blockingHit = GetWorld()->LineTraceSingleByChannel(
+		Hit,				// Struct to store the hit data in
+		EyeLocation,		// Start location
+		TraceEnd,			// End location
+		ECC_Visibility,		// Similar to layer
+		QueryParams);
+
+	if (blockingHit) {
+		AActor* HitActor = Hit.GetActor();
+
+		UGameplayStatics::ApplyPointDamage(
+			HitActor,							// Actor that got hit
+			20.f,								// damage to apply
+			ShotDirection,						// direction shot came from
+			Hit,								// struct containing all hit data
+			own->GetInstigatorController(),	// who triggered the damage event
+			this,								// who is applying the damage to the AActor
+			DamageType);						// damage type (using unreal defaults) - can be extended for specific use
+
+		PlayImpactEffect(&Hit);
+
+		TracerEndPoint = Hit.ImpactPoint;
+	}
+
+	return TracerEndPoint;
+}
+
+void ASWeapon::PlayShotEffects(FVector targetPoint)
+{
+	PlayMuzzleFlashEffect();
+	PlaySmokeTrailEffect(targetPoint);
+}
+
+void ASWeapon::PlayImpactEffect(FHitResult* hit) {
+	// Spawn impact effect
+	if (ImpactEffect) {
+		//UE_LOG(LogTemp, Log, TEXT("playing impact effect"));
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, hit->ImpactPoint, hit->ImpactNormal.Rotation());
+	}
+}
+
+void ASWeapon::PlayMuzzleFlashEffect() {
+	// Play flash effect
+	if (MuzzleFlashEffect) {
+		// Ensures the effect follows the parent location
+		UGameplayStatics::SpawnEmitterAttached(MuzzleFlashEffect, MeshComp, MuzzleSocketName);
+	}
+}
+
+void ASWeapon::PlaySmokeTrailEffect(FVector targetPoint) {
+	if (TracerEffect) {
+		FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+
+		UParticleSystemComponent* TracerEffectComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation);
+		if (TracerEffectComp) {
+			TracerEffectComp->SetVectorParameter(TracerTargetName, targetPoint);
+		}
+	}
+}
+
+// Called every frame
+void ASWeapon::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+

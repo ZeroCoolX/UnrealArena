@@ -4,30 +4,30 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "SHitscanWeapon.generated.h"
+#include "SWeapon.generated.h"
 
 class USkeletalMeshComponent;
 class UDamageType;
 class UParticleSystem;
 
 UCLASS()
-class UNREALARENA_API ASHitscanWeapon : public AActor
+class UNREALARENA_API ASWeapon : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ASHitscanWeapon();
+	ASWeapon();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USkeletalMeshComponent* MeshComp;
-
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void Fire();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USkeletalMeshComponent* MeshComp;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<UDamageType> DamageType;
@@ -46,6 +46,15 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* TracerEffect;
+
+	// Raycast
+	FVector Shoot(AActor* own);
+
+	// Weapon effects
+	void PlayImpactEffect(FHitResult* hit);
+	void PlayShotEffects(FVector targetPoint);
+	void PlayMuzzleFlashEffect();
+	void PlaySmokeTrailEffect(FVector targetPoint);
 
 public:	
 	// Called every frame
