@@ -58,10 +58,10 @@ FVector ASWeapon::Shoot(AActor* own) {
 	FHitResult Hit;
 
 	bool blockingHit = GetWorld()->LineTraceSingleByChannel(
-		Hit,				// Struct to store the hit data in
-		EyeLocation,		// Start location
-		TraceEnd,			// End location
-		ECC_Visibility,		// Similar to layer
+		Hit,					// Struct to store the hit data in
+		EyeLocation,			// Start location
+		TraceEnd,				// End location
+		COLLISION_WEAPON,		// Similar to layer
 		QueryParams);
 
 	if (blockingHit) {
