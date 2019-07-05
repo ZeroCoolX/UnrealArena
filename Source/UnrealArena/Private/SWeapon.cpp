@@ -6,6 +6,8 @@
 #include "Particles/ParticleSystem.h"
 #include "components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "../UnrealArena.h"
 
 static int32 DrawDebugWeapon = 0;
 FAutoConsoleVariableRef CVARDrawDebugWeapon (
@@ -41,7 +43,7 @@ FVector ASWeapon::Shoot(AActor* own) {
 
 	FVector ShotDirection = EyeRotation.Vector();
 
-	FVector TraceEnd = EyeLocation + (ShotDirection * 10000); // arbitrary long length for hitscan
+	FVector TraceEnd = EyeLocation + (ShotDirection * 10000); // arbitrary long length for hit scan
 	// Particle "Target" parameter
 	FVector TracerEndPoint = TraceEnd;
 
@@ -51,6 +53,7 @@ FVector ASWeapon::Shoot(AActor* own) {
 	// More expensive, but also tells us exactly where the collision occurred
 	// Useful for spawning effects on the hit
 	QueryParams.bTraceComplex = true;
+	QueryParams.bReturnPhysicalMaterial = true;
 
 	FHitResult Hit;
 
@@ -93,10 +96,24 @@ void ASWeapon::PlayShotEffects(FVector targetPoint)
 }
 
 void ASWeapon::PlayImpactEffect(FHitResult* hit) {
+	EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(hit->PhysMaterial.Get());
+
+	UParticleSystem* SelectedEffect = nullptr;
+
+	switch (SurfaceType) {
+	case SURFACE_FLESHDEFAULT:
+	case SURFACE_FLESHVULNERABLE:
+		SelectedEffect = FleshImpactEffect;
+		break;
+	default:
+		SelectedEffect = DefaultImpactEffect;
+		break;
+	}
+
 	// Spawn impact effect
-	if (ImpactEffect) {
+	if (SelectedEffect) {
 		//UE_LOG(LogTemp, Log, TEXT("playing impact effect"));
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, hit->ImpactPoint, hit->ImpactNormal.Rotation());
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, hit->ImpactPoint, hit->ImpactNormal.Rotation());
 	}
 }
 
