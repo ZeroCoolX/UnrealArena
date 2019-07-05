@@ -8,6 +8,7 @@
 
 class UCameraComponent;
 class USpringArmComponent;
+class ASWeapon;
 
 UCLASS()
 class UNREALARENA_API ASCharacter : public ACharacter
@@ -32,6 +33,11 @@ protected:
 	void BeginZoom();
 	void EndZoom();
 
+	UPROPERTY(EditDefaultsOnly, Category = "Player")
+	TSubclassOf<ASWeapon> StarterWeaponClass;
+
+	void Fire();
+
 	// expose the class to unreal to allow editing properties, blueprint readonly means we cannot reinstantiate it
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCameraComponent* CameraComp;
@@ -46,6 +52,12 @@ protected:
 	float ZoomInterpSpeed;
 	// Default Field of View
 	float DefaultFOV;
+
+	ASWeapon* CurrentWeapon;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Player")
+	FName WeaponAttachSocketName;
+
 
 public:	
 	// Called every frame

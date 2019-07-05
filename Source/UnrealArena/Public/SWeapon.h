@@ -20,12 +20,6 @@ public:
 	ASWeapon();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	virtual void Fire();
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* MeshComp;
 
@@ -56,10 +50,8 @@ protected:
 	void PlayMuzzleFlashEffect();
 	void PlaySmokeTrailEffect(FVector targetPoint);
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+public:
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual void Fire();
 
-	
-	
 };
