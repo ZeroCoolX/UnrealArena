@@ -3,6 +3,7 @@
 #include "../Public/SHitscanWeapon.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
 
 // Sets default values
 ASHitscanWeapon::ASHitscanWeapon()
@@ -12,6 +13,8 @@ ASHitscanWeapon::ASHitscanWeapon()
 
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
 	RootComponent = MeshComp;
+
+	MuzzleSocketName = "MuzzleFlashSocket";
 }
 
 // Called when the game starts or when spawned
@@ -61,9 +64,21 @@ void ASHitscanWeapon::Fire() {
 				Owner->GetInstigatorController(),	// who triggered the damage event
 				this,								// who is applying the damage to the AActor
 				DamageType);						// damage type (using unreal defaults) - can be extended for specific use
+
+			// Spawn impact effect
+			if (ImpactEffect) {
+				//UE_LOG(LogTemp, Log, TEXT("playing impact effect"));
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
+			}
 		}
 
 		DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, 1.0f, 0, 1.f);
+
+		// Play flash effect
+		if (MuzzleFlashEffect) {
+			// Ensures the effect follows the parent location
+			UGameplayStatics::SpawnEmitterAttached(MuzzleFlashEffect, MeshComp, MuzzleSocketName);
+		}
 	}
 }
 
