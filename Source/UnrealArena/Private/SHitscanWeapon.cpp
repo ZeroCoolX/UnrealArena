@@ -4,6 +4,8 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
+#include "components/SkeletalMeshComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 ASHitscanWeapon::ASHitscanWeapon()
@@ -14,6 +16,7 @@ ASHitscanWeapon::ASHitscanWeapon()
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
 	RootComponent = MeshComp;
 
+	TracerTargetName = "BeamEnd";
 	MuzzleSocketName = "MuzzleFlashSocket";
 }
 
@@ -37,6 +40,8 @@ void ASHitscanWeapon::Fire() {
 		FVector ShotDirection = EyeRotation.Vector();
 
 		FVector TraceEnd = EyeLocation + (ShotDirection * 10000); // arbitrary long length for hitscan
+		// Particle "Target" parameter
+		FVector TracerEndPoint = TraceEnd;
 
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(Owner);
@@ -46,6 +51,7 @@ void ASHitscanWeapon::Fire() {
 		QueryParams.bTraceComplex = true;
 
 		FHitResult Hit;
+
 		bool blockingHit = GetWorld()->LineTraceSingleByChannel(
 			Hit,				// Struct to store the hit data in
 			EyeLocation,		// Start location
@@ -70,6 +76,8 @@ void ASHitscanWeapon::Fire() {
 				//UE_LOG(LogTemp, Log, TEXT("playing impact effect"));
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
 			}
+
+			TracerEndPoint = Hit.ImpactPoint;
 		}
 
 		DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, 1.0f, 0, 1.f);
@@ -78,6 +86,15 @@ void ASHitscanWeapon::Fire() {
 		if (MuzzleFlashEffect) {
 			// Ensures the effect follows the parent location
 			UGameplayStatics::SpawnEmitterAttached(MuzzleFlashEffect, MeshComp, MuzzleSocketName);
+		}
+
+		if (TracerEffect) {
+			FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+
+			UParticleSystemComponent* TracerEffectComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation);
+			if (TracerEffectComp) {
+				TracerEffectComp->SetVectorParameter(TracerTargetName, TracerEndPoint);
+			}
 		}
 	}
 }
