@@ -21,7 +21,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void Fire();
 
+	void StartFire();
+	void StopFire();
+
 protected:
+	virtual void BeginPlay() override;
+
 	FVector Shoot(AActor* own);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -53,6 +58,17 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	float BaseDamage;
+
+	FTimerHandle TimerHandle_TimeBetweenShots;
+
+	float LastFiredTime;
+
+	// RPM - Rounds per minute fired
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float RateOfFire;
+
+	// Derived from RPM
+	float TimeBetweenShots;
 
 private:
 	// Weapon effects

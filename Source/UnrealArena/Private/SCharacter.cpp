@@ -112,12 +112,27 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction("ADS", IE_Pressed, this, &ASCharacter::BeginZoom);
 	PlayerInputComponent->BindAction("ADS", IE_Released, this, &ASCharacter::EndZoom);
 
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::Fire);
+	//PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::Fire); // TODO: Handle for grenade launcher
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::StartFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ASCharacter::StopFire);
 }
 
+// TODO: Unused - fix for grenade launcher by checking weapon type
 void ASCharacter::Fire() {
 	if (CurrentWeapon) {
 		CurrentWeapon->Fire();
+	}
+}
+
+void ASCharacter::StartFire() {
+	if (CurrentWeapon) {
+		CurrentWeapon->StartFire();
+	}
+}
+
+void ASCharacter::StopFire() {
+	if (CurrentWeapon) {
+		CurrentWeapon->StopFire();
 	}
 }
 

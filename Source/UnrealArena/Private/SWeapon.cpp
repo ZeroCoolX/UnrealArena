@@ -8,6 +8,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "../UnrealArena.h"
+#include "TimerManager.h"
 
 static int32 DrawDebugWeapon = 0;
 FAutoConsoleVariableRef CVARDrawDebugWeapon (
@@ -26,6 +27,13 @@ ASWeapon::ASWeapon()
 	MuzzleSocketName = "MuzzleFlashSocket";
 
 	BaseDamage = 25.f;
+	RateOfFire = 600;
+}
+
+void ASWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	TimeBetweenShots = 60.f / RateOfFire; //Rounds per minute
 }
 
 
@@ -35,6 +43,24 @@ void ASWeapon::Fire() {
 		FVector targetPoint = Shoot(Owner);
 		PlayShotEffects(targetPoint);
 	}
+}
+
+void ASWeapon::StartFire()
+{
+	float FirstDelay = FMath::Max(LastFiredTime + TimeBetweenShots - GetWorld()->TimeSeconds, 0.f);
+
+	GetWorldTimerManager().SetTimer(
+		TimerHandle_TimeBetweenShots,	// timer instance
+		this,							// parent
+		&ASWeapon::Fire,				// function delegate
+		TimeBetweenShots,				// interval
+		true,							// looping
+		FirstDelay);					// first delay - 0 = immediately on click
+}
+
+void ASWeapon::StopFire()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_TimeBetweenShots);
 }
 
 FVector ASWeapon::Shoot(AActor* own) {
@@ -96,6 +122,8 @@ FVector ASWeapon::Shoot(AActor* own) {
 
 		TracerEndPoint = Hit.ImpactPoint;
 	}
+
+	LastFiredTime = GetWorld()->TimeSeconds;
 
 	return TracerEndPoint;
 }
