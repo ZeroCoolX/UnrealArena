@@ -78,3 +78,14 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
 }
 
+// Overriding to use the camera location instead of the pawn
+FVector ASCharacter::GetPawnViewLocation() const
+{
+	if (CameraComp) {
+		return CameraComp->GetComponentLocation();
+	}
+
+	// default to the base implementation
+	return Super::GetPawnViewLocation();
+}
+
