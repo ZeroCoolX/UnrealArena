@@ -7,6 +7,7 @@
 #include "../Public/SWeapon.h"
 #include "Components/CapsuleComponent.h"
 #include "../UnrealArena.h"
+#include "../Public/SHealthComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -22,6 +23,8 @@ ASCharacter::ASCharacter()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComponent"));
 
 	ZoomedFOV = 65.f;
 	ZoomInterpSpeed = 20.f;
@@ -44,6 +47,8 @@ void ASCharacter::BeginPlay()
 		CurrentWeapon->SetOwner(this);
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocketName);
 	}
+
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 }
 
 void ASCharacter::MoveForward(float Direction)
@@ -137,6 +142,27 @@ void ASCharacter::StartFire() {
 void ASCharacter::StopFire() {
 	if (CurrentWeapon) {
 		CurrentWeapon->StopFire();
+	}
+}
+
+void ASCharacter::OnHealthChanged(USHealthComponent* HealthComp, 
+	float Health, 
+	float DeltaHealth, 
+	const class UDamageType* DamageType, 
+	class AController* InstigatedBy,
+	AActor* DamageCauser)
+{
+	if (Health <= 0.f && !bDied) {
+		bDied = true;
+
+		// Stop moving
+		GetMovementComponent()->StopMovementImmediately();
+		// Stop collision
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// Disable player input
+		DetachFromControllerPendingDestroy();
+		// Destroy the pawn after 10 seconds
+		SetLifeSpan(10.f);
 	}
 }
 
