@@ -10,6 +10,19 @@ class USkeletalMeshComponent;
 class UDamageType;
 class UParticleSystem;
 
+// contains info of a single hitscan weapon line trace
+USTRUCT()
+struct FHitscanTrace {
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TEnumAsByte<EPhysicalSurface> SurfaceType;
+	
+	UPROPERTY()
+	FVector_NetQuantize TraceTo;
+};
+
 UCLASS()
 class UNREALARENA_API ASWeapon : public AActor
 {
@@ -74,9 +87,15 @@ protected:
 	// Derived from RPM
 	float TimeBetweenShots;
 
+	UPROPERTY(ReplicatedUsing=OnRep_HitscanTrace)
+	FHitscanTrace HitscanTrace;
+
+	UFUNCTION()
+	void OnRep_HitscanTrace();
+
 private:
 	// Weapon effects
-	void PlayImpactEffect(FHitResult* hit, EPhysicalSurface* surfaceType);
+	void PlayImpactEffect(EPhysicalSurface surfaceType, FVector impactPoint);
 	void PlayShotEffects(FVector targetPoint);
 	void PlayMuzzleFlashEffect();
 	void PlaySmokeTrailEffect(FVector targetPoint);
