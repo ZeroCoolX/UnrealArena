@@ -58,7 +58,7 @@ protected:
 	ASWeapon* CurrentWeapon;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Player")
-		FName WeaponAttachSocketName;
+	FName WeaponAttachSocketName;
 
 	/******** Camera Control /********/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -67,9 +67,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USpringArmComponent* SpringArmComp;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Player")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player")
 	bool bDied;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USHealthComponent* HealthComp;
 
 	UFUNCTION()
