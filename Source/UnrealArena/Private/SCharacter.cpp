@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "../UnrealArena.h"
 #include "../Public/SHealthComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -177,5 +178,13 @@ FVector ASCharacter::GetPawnViewLocation() const
 
 	// default to the base implementation
 	return Super::GetPawnViewLocation();
+}
+
+void ASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const 
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// replicate to any relevant client thats connected to the server
+	DOREPLIFETIME(ASCharacter, CurrentWeapon);
 }
 
