@@ -41,11 +41,26 @@ void ASWeapon::BeginPlay()
 
 
 void ASWeapon::Fire() {
+	// Client only needs to tell the server as well
+	if (Role < ROLE_Authority) {
+		ServerFire();
+	}
+
 	AActor* Owner = GetOwner();
 	if (Owner) {
 		FVector targetPoint = Shoot(Owner);
 		PlayShotEffects(targetPoint);
 	}
+}
+
+void ASWeapon::ServerFire_Implementation()
+{
+	Fire();
+}
+// Intended for anti hax
+bool ASWeapon::ServerFire_Validate()
+{
+	return true;
 }
 
 void ASWeapon::StartFire()

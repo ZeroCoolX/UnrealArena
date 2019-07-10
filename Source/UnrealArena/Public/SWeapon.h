@@ -21,6 +21,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void Fire();
 
+	// Push this request to the hosting server, guaranteed to get there eventually, required when specifying push to server
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire();
+
 	void StartFire();
 	void StopFire();
 
