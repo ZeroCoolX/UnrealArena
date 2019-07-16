@@ -6,6 +6,8 @@
 #include "GameFramework/Pawn.h"
 #include "STickerBot.generated.h"
 
+class USHealthComponent;
+
 UCLASS()
 class UNREALARENA_API ASTickerBot : public APawn
 {
@@ -21,6 +23,17 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, Category="Components")
 	UStaticMeshComponent* MeshComp;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	USHealthComponent* HealthComp;
+
+	UFUNCTION()
+	void HandleTakeDamage(USHealthComponent* OwningHealthComp,
+		float Health,
+		float DeltaHealth,
+		const class UDamageType* DamageType,
+		class AController* InstigatedBy,
+		AActor* DamageCauser);
 
 	FVector GetNextPathPoint();
 

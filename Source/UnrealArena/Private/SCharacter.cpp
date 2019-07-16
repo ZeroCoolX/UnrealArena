@@ -148,7 +148,7 @@ void ASCharacter::StopFire() {
 	}
 }
 
-void ASCharacter::OnHealthChanged(USHealthComponent* HealthComp, 
+void ASCharacter::OnHealthChanged(USHealthComponent* OwningHealthComp,
 	float Health, 
 	float DeltaHealth, 
 	const class UDamageType* DamageType, 
