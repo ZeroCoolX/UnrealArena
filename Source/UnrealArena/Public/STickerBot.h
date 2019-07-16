@@ -52,6 +52,19 @@ protected:
 	// Dynamic material to pulse
 	UMaterialInstanceDynamic* MatInst;
 
+	void SelfDestruct();
+
+	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
+	UParticleSystem* ExplosionEffect;
+
+	bool bExploded;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
+	float ExplosionRadius;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
+	float ExplosionDamage;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

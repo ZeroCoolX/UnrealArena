@@ -26,6 +26,8 @@ ASTickerBot::ASTickerBot()
 	bUseVelocityChange = false;
 	MovementForce = 1000;
 	TargetDistanceThreshold = 100;
+	ExplosionDamage = 40;
+	ExplosionRadius = 200;
 }
 
 // Called when the game starts or when spawned
@@ -66,9 +68,7 @@ void ASTickerBot::Tick(float DeltaTime)
 
 void ASTickerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float Health, float DeltaHealth, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
-	// Explode on hitpoints == 0
 
-	// @TODO: Pulse the material on hit
 	// stops duplication
 	if (MatInst == nullptr) {
 		// Create the pulse effect
@@ -81,6 +81,11 @@ void ASTickerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float He
 
 	// Need char* for the logging macro - not just primitive string
 	UE_LOG(LogTemp, Log, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName());
+	
+	// Explode on hitpoints == 0
+	if (Health <= 0.f) {
+		SelfDestruct();
+	}
 }
 
 FVector ASTickerBot::GetNextPathPoint() {
@@ -102,4 +107,23 @@ FVector ASTickerBot::GetNextPathPoint() {
 	return GetActorLocation();
 }
 
+void ASTickerBot::SelfDestruct()
+{
+	if (bExploded) {
+		return;
+	}
+	bExploded = true;
+
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorLocation());
+
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Add(this);
+
+	UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+
+	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.f, 0.f, 1.f);
+
+	// Delete actor immediately
+	Destroy();
+}
 
