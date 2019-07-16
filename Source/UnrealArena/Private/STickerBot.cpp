@@ -49,6 +49,10 @@ void ASTickerBot::BeginPlay()
 	if (Role == ROLE_Authority) {
 		// find initial move to point
 		NextPathPoint = GetNextPathPoint();
+
+		// Every second we update our power-level based on nearby tickers
+		FTimerHandle TimerHandle_CheckPowerLevel;
+		GetWorldTimerManager().SetTimer(TimerHandle_CheckPowerLevel, this, &ASTickerBot::OnCheckNearbyTickers, 1.f, true);
 	}
 }
 
@@ -142,7 +146,9 @@ void ASTickerBot::SelfDestruct()
 		TArray<AActor*> IgnoredActors;
 		IgnoredActors.Add(this);
 
-		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+		float ActualDamage = ExplosionDamage + (ExplosionDamage * PowerLevel);
+
+		UGameplayStatics::ApplyRadialDamage(this, ActualDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
 
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.f, 0.f, 1.f);
 
@@ -173,5 +179,55 @@ void ASTickerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 
 void ASTickerBot::DamageSelf() {
 	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
+}
+
+void ASTickerBot::OnCheckNearbyTickers()
+{
+	// distance to check for nearby tickers
+	const float Radius = 600;
+
+	// create temporary collision shape for overlaps
+	FCollisionShape CollShape;
+	CollShape.SetSphere(Radius);
+
+	//Only find Pawns (eg. players and AI)
+	FCollisionObjectQueryParams QueryParams;
+	// Our ticker bot's mesh component is set to Physics Body in blueprint (default profile of physics simulated actors)
+	QueryParams.AddObjectTypesToQuery(ECC_PhysicsBody);
+	QueryParams.AddObjectTypesToQuery(ECC_Pawn);
+
+	TArray<FOverlapResult> Overlaps;
+	GetWorld()->OverlapMultiByObjectType(Overlaps, GetActorLocation(), FQuat::Identity, QueryParams, CollShape);
+
+	DrawDebugSphere(GetWorld(), GetActorLocation(), Radius, 12, FColor::White, false, 1.f);
+
+	// Collect the nr of tickers in the area
+	int32 NrOfTickers = 0;
+	for (FOverlapResult OverHit : Overlaps) {
+		// check if we overlapped with another ticker (ignoring players and other bot types)
+		ASTickerBot* Ticker = Cast<ASTickerBot>(OverHit.GetActor());
+		if (Ticker && Ticker != this) {
+			++NrOfTickers;
+		}
+	}
+
+	const int32 MaxPowerLevel = 4;
+
+	// Clamp between min=0 and max=4
+	PowerLevel = FMath::Clamp(NrOfTickers, 0, MaxPowerLevel);
+
+	// Update the material color
+	if (MatInst == nullptr) {
+		MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
+	}
+	if (MeshComp) {
+		// Convert to a float between 0 and 1 like an Alpha value of a texture. Now the material can be set up without having to know the max power level
+		// which can be tweaked many times by gameplay decisions
+		float PowerLevelAlpha = PowerLevel / (float)MaxPowerLevel;
+
+		MatInst->SetScalarParameterValue("PowerLevelAlpha", PowerLevelAlpha);
+	}
+
+	DrawDebugString(GetWorld(), FVector(0, 0, 0), FString::FromInt(PowerLevel), this, FColor::White, 1.f, true);
 }
 
