@@ -69,6 +69,15 @@ void ASTickerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float He
 	// Explode on hitpoints == 0
 
 	// @TODO: Pulse the material on hit
+	// stops duplication
+	if (MatInst == nullptr) {
+		// Create the pulse effect
+		MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0)); // Dynamic must be used so only the effected trackerbot is modified and not all instances in the world
+	}
+
+	if (MatInst) {
+		MatInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
+	}
 
 	// Need char* for the logging macro - not just primitive string
 	UE_LOG(LogTemp, Log, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName());
