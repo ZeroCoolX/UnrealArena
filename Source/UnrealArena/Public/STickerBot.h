@@ -86,6 +86,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
 	USoundCue* ExplodeSound;
 
+	void OnCheckNearbyBots();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

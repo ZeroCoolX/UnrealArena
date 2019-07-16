@@ -46,8 +46,10 @@ void ASTickerBot::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// find initial move to point
-	NextPathPoint = GetNextPathPoint();
+	if (Role == ROLE_Authority) {
+		// find initial move to point
+		NextPathPoint = GetNextPathPoint();
+	}
 }
 
 // Called every frame
@@ -55,26 +57,28 @@ void ASTickerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
+	if (Role == ROLE_Authority && !bExploded) {
+		float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
 
-	if (DistanceToTarget <= TargetDistanceThreshold) {
-		// find the next path point
-		NextPathPoint = GetNextPathPoint();
+		if (DistanceToTarget <= TargetDistanceThreshold) {
+			// find the next path point
+			NextPathPoint = GetNextPathPoint();
 
-		DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached!");
+			DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached!");
+		}
+		else {
+			// Keep moving towards the current target point
+			FVector ForceDirection = NextPathPoint - GetActorLocation();
+			ForceDirection.Normalize();
+
+			ForceDirection *= MovementForce;
+
+			MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChange);
+			DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection, 32, FColor::Green, false, 0.f, 0, 1.f);
+		}
+
+		DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Green, false, 0.f, 1.f);
 	}
-	else {
-		// Keep moving towards the current target point
-		FVector ForceDirection = NextPathPoint - GetActorLocation();
-		ForceDirection.Normalize();
-
-		ForceDirection *= MovementForce;
-
-		MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChange);
-		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection, 32, FColor::Green, false, 0.f, 0, 1.f);
-	}
-
-	DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Green, false, 0.f, 1.f);
 }
 
 void ASTickerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float Health, float DeltaHealth, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
@@ -127,30 +131,39 @@ void ASTickerBot::SelfDestruct()
 
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorLocation());
 
-	TArray<AActor*> IgnoredActors;
-	IgnoredActors.Add(this);
-
-	UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
-
-	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.f, 0.f, 1.f);
-
 	UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
 
-	// Delete actor immediately
-	Destroy();
+	MeshComp->SetVisibility(false,	// self 
+		true);						// children
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Only run on server
+	if (Role == ROLE_Authority) {
+		TArray<AActor*> IgnoredActors;
+		IgnoredActors.Add(this);
+
+		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+
+		DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.f, 0.f, 1.f);
+
+		// Delete actor immediately
+		SetLifeSpan(2.f);
+	}
 }
 
 void ASTickerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	if (bSelfDestructInitiated) { return; }
+	if (bSelfDestructInitiated || bExploded) { return; }
 
 	ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
 	if (PlayerPawn) {
 		// We overlapped with a player!
 
-		// Start self destruction sequence
-		// Sequence is dependent on how much health it has
-		GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTickerBot::DamageSelf, SelfDamageInterval, true, 0.f);
+		if (Role == ROLE_Authority) {
+			// Start self destruction sequence
+			// Sequence is dependent on how much health it has
+			GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTickerBot::DamageSelf, SelfDamageInterval, true, 0.f);
+		}
 
 		bSelfDestructInitiated = true;
 
