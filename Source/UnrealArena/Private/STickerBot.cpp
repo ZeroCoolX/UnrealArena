@@ -10,6 +10,7 @@
 #include "../Public/SHealthComponent.h"
 #include "../Public/SCharacter.h"
 #include "Components/SphereComponent.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 ASTickerBot::ASTickerBot()
@@ -37,6 +38,7 @@ ASTickerBot::ASTickerBot()
 	TargetDistanceThreshold = 100;
 	ExplosionDamage = 40;
 	ExplosionRadius = 200;
+	SelfDamageInterval = 0.25f;
 }
 
 // Called when the game starts or when spawned
@@ -132,6 +134,8 @@ void ASTickerBot::SelfDestruct()
 
 	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.f, 0.f, 1.f);
 
+	UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
+
 	// Delete actor immediately
 	Destroy();
 }
@@ -146,9 +150,11 @@ void ASTickerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 
 		// Start self destruction sequence
 		// Sequence is dependent on how much health it has
-		GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTickerBot::DamageSelf, 0.5f, true, 0.f);
+		GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTickerBot::DamageSelf, SelfDamageInterval, true, 0.f);
 
 		bSelfDestructInitiated = true;
+
+		UGameplayStatics::SpawnSoundAttached(SelfDestructSound, RootComponent);
 	}
 }
 

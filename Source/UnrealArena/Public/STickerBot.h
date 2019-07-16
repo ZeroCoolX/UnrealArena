@@ -8,6 +8,7 @@
 
 class USHealthComponent;
 class USphereComponent;
+class USoundCue;
 
 UCLASS()
 class UNREALARENA_API ASTickerBot : public APawn
@@ -71,9 +72,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
 	float ExplosionDamage;
 
+	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
+	float SelfDamageInterval;
+
 	FTimerHandle TimerHandle_SelfDamage;
 
 	void DamageSelf();
+
+	// Audio assets
+	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
+	USoundCue* SelfDestructSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
+	USoundCue* ExplodeSound;
 
 public:	
 	// Called every frame
