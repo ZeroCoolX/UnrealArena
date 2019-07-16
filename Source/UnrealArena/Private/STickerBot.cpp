@@ -8,11 +8,13 @@
 #include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
 #include "../Public/SHealthComponent.h"
+#include "../Public/SCharacter.h"
+#include "Components/SphereComponent.h"
 
 // Sets default values
 ASTickerBot::ASTickerBot()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
@@ -22,6 +24,13 @@ ASTickerBot::ASTickerBot()
 
 	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASTickerBot::HandleTakeDamage);
+
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	SphereComp->SetSphereRadius(200);
+	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComp->SetupAttachment(RootComponent);
 
 	bUseVelocityChange = false;
 	MovementForce = 1000;
@@ -34,7 +43,7 @@ ASTickerBot::ASTickerBot()
 void ASTickerBot::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	// find initial move to point
 	NextPathPoint = GetNextPathPoint();
 }
@@ -81,7 +90,7 @@ void ASTickerBot::HandleTakeDamage(USHealthComponent* OwningHealthComp, float He
 
 	// Need char* for the logging macro - not just primitive string
 	UE_LOG(LogTemp, Log, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName());
-	
+
 	// Explode on hitpoints == 0
 	if (Health <= 0.f) {
 		SelfDestruct();
@@ -125,5 +134,25 @@ void ASTickerBot::SelfDestruct()
 
 	// Delete actor immediately
 	Destroy();
+}
+
+void ASTickerBot::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	if (bSelfDestructInitiated) { return; }
+
+	ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
+	if (PlayerPawn) {
+		// We overlapped with a player!
+
+		// Start self destruction sequence
+		// Sequence is dependent on how much health it has
+		GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTickerBot::DamageSelf, 0.5f, true, 0.f);
+
+		bSelfDestructInitiated = true;
+	}
+}
+
+void ASTickerBot::DamageSelf() {
+	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
 }
 

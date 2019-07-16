@@ -7,6 +7,7 @@
 #include "STickerBot.generated.h"
 
 class USHealthComponent;
+class USphereComponent;
 
 UCLASS()
 class UNREALARENA_API ASTickerBot : public APawn
@@ -26,6 +27,9 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	USHealthComponent* HealthComp;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	USphereComponent* SphereComp;
 
 	UFUNCTION()
 	void HandleTakeDamage(USHealthComponent* OwningHealthComp,
@@ -59,14 +63,21 @@ protected:
 
 	bool bExploded;
 
+	bool bSelfDestructInitiated;
+
 	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
 	float ExplosionRadius;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "TickerBot")
 	float ExplosionDamage;
 
+	FTimerHandle TimerHandle_SelfDamage;
+
+	void DamageSelf();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
+
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 };
