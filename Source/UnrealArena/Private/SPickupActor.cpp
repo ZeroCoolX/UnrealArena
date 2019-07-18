@@ -20,6 +20,8 @@ ASPickupActor::ASPickupActor()
 		75.f,	// matches sphere radius
 		75.f);	// matches sphere radius
 	DecalComp->SetupAttachment(RootComponent);
+
+	CooldownDuration = 10.f;
 }
 
 // Called when the game starts or when spawned
