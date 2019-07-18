@@ -159,6 +159,8 @@ void ASTickerBot::SelfDestruct()
 
 void ASTickerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 {
+	Super::NotifyActorBeginOverlap(OtherActor);
+
 	if (bSelfDestructInitiated || bExploded) { return; }
 
 	ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
