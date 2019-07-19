@@ -18,10 +18,13 @@ public:
 	ASGameMode();
 
 	virtual void StartPlay() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 	
 protected:
 
 	FTimerHandle TimerHandle_BotSpawner;
+	FTimerHandle TimerHandle_NextWaveStart;
 	
 	int32 NrOfBotsToSpawn;
 	int32 WaveLevel;
@@ -41,4 +44,6 @@ protected:
 	void EndWave();
 
 	void PrepareForNextWave();
+
+	void CheckWaveState();
 };
