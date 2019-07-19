@@ -24,8 +24,8 @@ void ASGameMode::StartPlay()
 void ASGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
 	CheckWaveState();
+	CheckAnyPlayerAlive();
 }
 
 void ASGameMode::StartWave()
@@ -79,7 +79,32 @@ void ASGameMode::CheckWaveState()
 	PrepareForNextWave();
 }
 
+void ASGameMode::CheckAnyPlayerAlive()
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) {
+		APlayerController* PC = It->Get();
+		if (PC && PC->GetPawn()) {
+			APawn* Pwn = PC->GetPawn();
+			USHealthComponent* HealthComp = Cast<USHealthComponent>(Pwn->GetComponentByClass(USHealthComponent::StaticClass()));
+			// If this check fails it will breakpoint here
+			if (ensure(HealthComp) && HealthComp->GetHealth() > 0.f) {
+				// someone is still kickin'
+				return;
+			}
+		}
+	}
+
+	GameOver();
+}
+
 void ASGameMode::EndWave()
 {
 	GetWorldTimerManager().ClearTimer(TimerHandle_BotSpawner);
+}
+
+void ASGameMode::GameOver() {
+	EndWave();
+
+	// Finish up the match and present stats to players
+	UE_LOG(LogTemp, Log, TEXT("Game Over - All players are dead"));
 }
