@@ -116,7 +116,7 @@ FVector ASTickerBot::GetNextPathPoint() {
 		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToActorSynchronously(this, GetActorLocation(), PlayerPawn);
 
 		// First path point is current location, want next one
-		if (NavPath->PathPoints.Num() > 1)
+		if (NavPath && NavPath->PathPoints.Num() > 1)
 		{
 			// Return next point in path
 			return NavPath->PathPoints[1];
