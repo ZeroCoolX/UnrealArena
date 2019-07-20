@@ -2,11 +2,13 @@
 
 #include "SHealthComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "../Public/SGameMode.h"
 
 // Sets default values for this component's properties
 USHealthComponent::USHealthComponent()
 {
 	DefaultHealth = 100.f;
+	bIsDead = false;
 
 	SetIsReplicated(true);
 }
@@ -42,14 +44,27 @@ void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor,
 	class AController* InstigatedBy,
 	AActor* DamageCauser)
 {
-	if (Damage <= 0.f) {
+	if (Damage <= 0.f || bIsDead) {
 		return;
 	}
+
 	Health = FMath::Clamp(Health - Damage, 0.f, DefaultHealth);
 													// turns float into character array
 	UE_LOG(LogTemp, Log, TEXT("Health changed: %s"), *FString::SanitizeFloat(Health));
 
+	bIsDead = Health <= 0.f;
+
 	OnHealthChanged.Broadcast(this, Health, Damage, DamageType, InstigatedBy, DamageCauser);
+
+	if (bIsDead) {
+		// Should only be done on the server
+		ASGameMode* GM = Cast<ASGameMode>(GetWorld()->GetAuthGameMode());
+		if (GM) {
+			GM->OnActorKilled.Broadcast(GetOwner(),		// Victim
+				DamageCauser,							// Killer
+				InstigatedBy);							// Killer Owner
+		}
+	}
 }
 
 void USHealthComponent::Heal(float HealAmount)

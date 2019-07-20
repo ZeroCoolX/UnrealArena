@@ -4,13 +4,14 @@
 #include "TimerManager.h"
 #include "../Public/SHealthComponent.h"
 #include "../Public/SGameState.h"
-
+#include "../Public/SPlayerState.h"
 
 ASGameMode::ASGameMode()
 {
 	TimeBetweenWaves = 2.f;
 
 	GameStateClass = ASGameState::StaticClass();
+	PlayerStateClass = ASPlayerState::StaticClass();
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1.f; // once a second
