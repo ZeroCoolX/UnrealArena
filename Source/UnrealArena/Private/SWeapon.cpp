@@ -29,6 +29,7 @@ ASWeapon::ASWeapon()
 
 	BaseDamage = 25.f;
 	RateOfFire = 600;
+	BulletSpread = 2.f;
 
 	// Allows this object to be spawned on server when its spawned in clients
 	SetReplicates(true);
@@ -93,6 +94,10 @@ FVector ASWeapon::Shoot(AActor* own) {
 	own->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
 	FVector ShotDirection = EyeRotation.Vector();
+
+	// Ad some randomness if this is an AI shooting
+	float HalfRad = FMath::DegreesToRadians(BulletSpread);
+	ShotDirection = FMath::VRandCone(ShotDirection, HalfRad, HalfRad);
 
 	FVector TraceEnd = EyeLocation + (ShotDirection * 10000); // arbitrary long length for hit scan
 	// Particle "Target" parameter
