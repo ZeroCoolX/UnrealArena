@@ -10,6 +10,8 @@ USHealthComponent::USHealthComponent()
 	DefaultHealth = 100.f;
 	bIsDead = false;
 
+	TeamNum = 255;
+
 	SetIsReplicated(true);
 }
 
@@ -48,6 +50,9 @@ void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor,
 		return;
 	}
 
+	// Don't apply friendly fire, but allow self damage
+	if (DamageCauser != DamagedActor && IsFriendly(DamagedActor, DamageCauser)) { return; }
+
 	Health = FMath::Clamp(Health - Damage, 0.f, DefaultHealth);
 													// turns float into character array
 	UE_LOG(LogTemp, Log, TEXT("Health changed: %s"), *FString::SanitizeFloat(Health));
@@ -80,11 +85,27 @@ void USHealthComponent::Heal(float HealAmount)
 	OnHealthChanged.Broadcast(this, Health, -HealAmount, nullptr, nullptr, nullptr);
 }
 
+
 void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// replicate to any relevant client thats connected to the server
 	DOREPLIFETIME(USHealthComponent, Health);
+}
+
+bool USHealthComponent::IsFriendly(AActor* ThisActor, AActor* OtherActor)
+{
+	// Assume friendly
+	if (ThisActor == nullptr || OtherActor == nullptr) { return true; }
+
+	USHealthComponent* ThisHealthComp = Cast<USHealthComponent>(ThisActor->GetComponentByClass(USHealthComponent::StaticClass()));
+	USHealthComponent* OtherHealthComp = Cast<USHealthComponent>(OtherActor->GetComponentByClass(USHealthComponent::StaticClass()));
+
+	// Assume friendly
+	if (ThisHealthComp == nullptr || OtherHealthComp == nullptr) { return true; }
+
+	// Determine if they're on the same team or not
+	return ThisHealthComp->TeamNum == OtherHealthComp->TeamNum;
 }
 

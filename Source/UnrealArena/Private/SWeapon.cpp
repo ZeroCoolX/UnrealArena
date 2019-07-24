@@ -141,7 +141,7 @@ FVector ASWeapon::Shoot(AActor* own) {
 			ShotDirection,						// direction shot came from
 			Hit,								// struct containing all hit data
 			own->GetInstigatorController(),	// who triggered the damage event
-			this,								// who is applying the damage to the AActor
+			own,								// who is applying the damage to the AActor
 			DamageType);						// damage type (using unreal defaults) - can be extended for specific use
 
 		PlayImpactEffect(SurfaceType, Hit.ImpactPoint);
